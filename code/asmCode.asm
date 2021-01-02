@@ -1,5 +1,5 @@
 ;----------------------------------------------;
-; Vom folosi utilitarul nasm pentru compilarea in limbaj x86- valabil pe majoritatea masiniilor de calcul
+; We will be using nasm with x86 instructions- available on most machines.
 ; nasm -f bin asmCode.asm -o data.bin
 ;
 ; Repository: https://github.com/d12/Assembly-8086-NASM-Snake/blob/master/snake.asm
