@@ -1,7 +1,7 @@
 # MbrOverWritter
 
 Here is a simple malware that overrides the MBR sector of the disk.
-The malware was written for a school project. It is supposed to demonstrate in a simple way how a spyware works.
+The malware was written for a school project. It is supposed to demonstrate in a simple way how a ransomware works.
 
 ## Architecture
 The malware was written for a windows 10 operating system.
